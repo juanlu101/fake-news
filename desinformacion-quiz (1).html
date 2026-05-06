@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desafío de Verificación Digital: ¿Realidad o Fake?</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & TOKENS ─────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:       #0d1117;
+  --ink-2:     #1e2535;
+  --ink-3:     #2e3a50;
+  --slate:     #4a5568;
+  --muted:     #718096;
+  --rule:      #e2e8f0;
+  --paper:     #f8f7f4;
+  --white:     #ffffff;
+  --accent:    #c41e3a;
+  --accent-2:  #1a3a6e;
+  --real:      #1a6e3a;
+  --real-bg:   #edf7f1;
+  --fake:      #6e1a1a;
+  --fake-bg:   #fdf0f0;
+  --pending:   #1a3a6e;
+  --pending-bg:#eef2fb;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.14);
+  --serif:  'Playfair Display', Georgia, serif;
+  --body:   'Source Serif 4', Georgia, serif;
+  --mono:   'JetBrains Mono', monospace;
+  --r: 4px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--body);
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── MASTHEAD ────────────────────────────────────────── */
+.masthead {
+  background: var(--ink);
+  color: var(--white);
+  text-align: center;
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-lg);
+}
+
+.masthead-top {
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding: 8px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.4);
+}
+
+.masthead-tagline { letter-spacing: 0.15em; text-transform: uppercase; }
+
+.masthead-main {
+  padding: 14px 24px 10px;
+}
+
+.masthead-main h1 {
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 4vw, 2.6rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.masthead-main h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.masthead-sub {
+  font-family: var(--body);
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.55);
+  margin-top: 4px;
+  letter-spacing: 0.04em;
+  font-weight: 300;
+}
+
+/* progress ticker */
+.progress-ticker {
+  background: var(--accent);
+  padding: 5px 16px;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  letter-spacing: 0.05em;
+}
+
+.progress-ticker .ticker-track {
+  width: 160px;
+  height: 3px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progress-ticker .ticker-fill {
+  height: 100%;
+  background: #fff;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+/* ── HERO / INSTRUCTIONS ─────────────────────────────── */
+.hero {
+  max-width: 760px;
+  margin: 40px auto 0;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 4px 12px;
+  border-radius: 2px;
+  margin-bottom: 18px;
+}
+
+.hero h2 {
+  font-family: var(--serif);
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+
+.hero p {
+  font-size: 0.95rem;
+  color: var(--slate);
+  line-height: 1.75;
+  font-weight: 300;
+  max-width: 580px;
+  margin: 0 auto 24px;
+}
+
+.rules-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 36px;
+}
+
+.rule-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: var(--r);
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  color: var(--slate);
+  box-shadow: var(--shadow-sm);
+}
+
+.rule-chip .chip-icon { font-size: 1rem; }
+
+/* ── DIVIDER ─────────────────────────────────────────── */
+.section-rule {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.section-rule hr {
+  border: none;
+  border-top: 3px double var(--ink);
+  margin: 0 0 8px;
+}
+
+.section-rule .rule-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+/* ── SINGLE CARD STAGE ───────────────────────────────── */
+.card-stage {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
+  min-height: 420px;
+}
+
+.stage-counter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.stage-counter .q-label {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stage-counter .q-label strong {
+  color: var(--ink);
+  font-size: 0.88rem;
+}
+
+.stage-dots {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 200px;
+}
+
+.stage-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--rule);
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+
+.stage-dot.done-correct { background: var(--real); }
+.stage-dot.done-wrong   { background: var(--accent); }
+.stage-dot.active       { background: var(--ink); transform: scale(1.2); }
+
+/* ── NEWS CARD ───────────────────────────────────────── */
+.news-card {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--ink-3);
+  padding: 28px 32px;
+  box-shadow: var(--shadow-md);
+  border-radius: var(--r);
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.card-number {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  background: var(--ink);
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  margin-top: 2px;
+}
+
+.card-meta {
+  flex: 1;
+}
+
+.card-section {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 5px;
+}
+
+.card-headline {
+  font-family: var(--serif);
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.card-body {
+  font-size: 0.875rem;
+  color: var(--slate);
+  line-height: 1.75;
+  font-weight: 300;
+  padding-left: 48px;
+  margin-bottom: 18px;
+  border-left: 1px solid var(--rule);
+}
+
+/* VOTE BUTTONS */
+.vote-row {
+  display: flex;
+  gap: 10px;
+  padding-left: 48px;
+  flex-wrap: wrap;
+}
+
+.vote-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 20px;
+  border: 1.5px solid var(--rule);
+  border-radius: var(--r);
+  background: var(--white);
+  font-family: var(--body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  color: var(--slate);
+  letter-spacing: 0.01em;
+}
+
+.vote-btn:hover { border-color: var(--ink-3); color: var(--ink); }
+
+.vote-btn.verdadera:hover,
+.vote-btn.verdadera.selected {
+  border-color: var(--real);
+  background: var(--real-bg);
+  color: var(--real);
+}
+
+.vote-btn.falsa:hover,
+.vote-btn.falsa.selected {
+  border-color: var(--accent);
+  background: var(--fake-bg);
+  color: var(--accent);
+}
+
+.vote-btn .btn-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* ── RESULTS PANEL (hidden initially) ───────────────── */
+.result-panel {
+  display: none;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: var(--r);
+  font-size: 0.83rem;
+  line-height: 1.65;
+  animation: revealResult 0.35s ease forwards;
+}
+
+@keyframes revealResult {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.result-panel.correct {
+  background: var(--real-bg);
+  border: 1px solid #a8d5b8;
+  color: var(--real);
+}
+
+.result-panel.wrong {
+  background: var(--fake-bg);
+  border: 1px solid #e8b4b4;
+  color: var(--fake);
+}
+
+.result-panel .verdict {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.result-panel .explanation {
+  color: var(--slate);
+  font-size: 0.82rem;
+}
+
+/* Card state after results */
+.news-card.revealed.is-real    { border-left-color: #1a6e3a; }
+.news-card.revealed.is-fake    { border-left-color: var(--accent); }
+
+/* ── SUBMIT ZONE ─────────────────────────────────────── */
+.submit-zone {
+  max-width: 860px;
+  margin: 0 auto 24px;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.unanswered-warning {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--accent);
+  margin-bottom: 14px;
+  min-height: 1.2em;
+  letter-spacing: 0.04em;
+}
+
+.btn-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 40px;
+  background: var(--ink);
+  color: var(--white);
+  border: none;
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  font-style: italic;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: var(--r);
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: var(--shadow-md);
+  letter-spacing: -0.01em;
+}
+
+.btn-submit:hover {
+  background: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── SCOREBOARD ──────────────────────────────────────── */
+#scoreboard {
+  display: none;
+  max-width: 860px;
+  margin: 0 auto 60px;
+  padding: 0 20px;
+}
+
+.score-masthead {
+  background: var(--ink);
+  color: var(--white);
+  padding: 36px 40px;
+  text-align: center;
+  border-radius: var(--r) var(--r) 0 0;
+}
+
+.score-masthead .score-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 8px;
+}
+
+.score-masthead .score-number {
+  font-family: var(--serif);
+  font-size: clamp(3rem, 10vw, 5.5rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.score-masthead .score-number span { color: var(--accent); }
+
+.score-masthead .score-label {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.6);
+  font-weight: 300;
+  margin-top: 6px;
+  font-family: var(--body);
+}
+
+.score-bar-wrap {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-top: none;
+  padding: 20px 28px;
+}
+
+.score-bar-track {
+  height: 8px;
+  background: var(--rule);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.score-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--real), #2ecc71);
+  border-radius: 99px;
+  transition: width 1s cubic-bezier(0.34,1.4,0.64,1);
+  width: 0%;
+}
+
+.score-stats {
+  display: flex;
+  gap: 16px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.score-stats .stat-correct { color: var(--real); }
+.score-stats .stat-wrong   { color: var(--accent); }
+
+.score-verdict {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-top: none;
+  border-radius: 0 0 var(--r) var(--r);
+  padding: 18px 28px;
+  font-family: var(--serif);
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--slate);
+  text-align: center;
+}
+
+/* ── BREAKDOWN TABLE ─────────────────────────────────── */
+.breakdown {
+  max-width: 860px;
+  margin: 24px auto 0;
+  padding: 0 20px;
+}
+
+.breakdown-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.breakdown-header h3 {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.breakdown-header .bh-sub {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── RESTART ─────────────────────────────────────────── */
+.restart-zone {
+  text-align: center;
+  padding: 32px 20px 60px;
+}
+
+.btn-restart {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 28px;
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid var(--ink-3);
+  font-family: var(--body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--r);
+  transition: all 0.18s;
+}
+
+.btn-restart:hover {
+  background: var(--ink);
+  color: var(--white);
+}
+
+/* ── FOOTER ──────────────────────────────────────────── */
+footer {
+  border-top: 3px double var(--ink);
+  text-align: center;
+  padding: 18px 20px;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+footer strong { color: var(--ink); }
+
+/* ── RESPONSIVE ──────────────────────────────────────── */
+@media (max-width: 600px) {
+  .masthead-top  { display: none; }
+  .card-body, .vote-row { padding-left: 0; }
+  .card-header   { flex-direction: column; gap: 8px; }
+  .card-number   { width: 28px; height: 28px; }
+  .news-card     { padding: 18px 16px; }
+  .score-masthead{ padding: 24px 20px; }
+  .score-bar-wrap, .score-verdict { padding: 14px 18px; }
+  .btn-submit    { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 400px) {
+  .vote-btn { flex: 1; justify-content: center; }
+}
+
+/* ── CARD ENTER / EXIT ANIMATIONS ────────────────────── */
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateX(32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cardExit {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-32px); }
+}
+
+.card-enter { animation: cardEnter 0.32s cubic-bezier(0.22,1,0.36,1) forwards; }
+.card-exit  { animation: cardExit  0.22s ease forwards; }
+
+/* ── RESULTS BREAKDOWN LIST ──────────────────────────── */
+.breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 20px;
+}
+
+.bd-item {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: start;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-left: 4px solid transparent;
+  font-size: 0.83rem;
+}
+
+.bd-item.bd-correct { border-left-color: var(--real); }
+.bd-item.bd-wrong   { border-left-color: var(--accent); }
+
+.bd-num {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+  padding-top: 2px;
+}
+
+.bd-content .bd-headline {
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.bd-content .bd-verdict {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.bd-verdict.v-correct { color: var(--real); }
+.bd-verdict.v-wrong   { color: var(--accent); }
+
+.bd-content .bd-expl {
+  font-size: 0.79rem;
+  color: var(--slate);
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+.bd-icon { font-size: 1.1rem; padding-top: 1px; }
+
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="masthead-top">
+    <span class="masthead-tagline">Autor: <strong style="color:rgba(255,255,255,0.7)">Juan Luis Torralbo Muñoz</strong> &nbsp;·&nbsp; Actividad educativa · Competencia digital</span>
+    <span id="masthead-date"></span>
+  </div>
+  <div class="masthead-main">
+    <h1>Desafío de Verificación Digital<br><em>¿Realidad o Fake?</em></h1>
+    <p class="masthead-sub">Educa tu ojo crítico ante la desinformación</p>
+  </div>
+  <div class="progress-ticker">
+    <span id="progress-text">0 / 15 respondidas</span>
+    <div class="ticker-track"><div class="ticker-fill" id="ticker-fill" style="width:0%"></div></div>
+  </div>
+</header>
+
+<!-- HERO / INSTRUCTIONS -->
+<section class="hero">
+  <div class="hero-kicker">📰 Instrucciones</div>
+  <h2>Lee cada noticia con atención y decide: ¿es real o inventada?</h2>
+  <p>
+    Tienes 15 titulares de tecnología, ciencia y sociedad. Algunos son hechos sorprendentes
+    pero completamente reales. Otros son bulos muy elaborados, diseñados para parecer
+    creíbles. Marca tu respuesta en cada uno y pulsa <strong>«Ver Resultados»</strong>
+    al terminar para descubrir cuántos has acertado.
+  </p>
+  <div class="rules-row">
+    <div class="rule-chip"><span class="chip-icon">🗞</span> 15 noticias en total</div>
+    <div class="rule-chip"><span class="chip-icon">🔀</span> Orden aleatorio cada vez</div>
+    <div class="rule-chip"><span class="chip-icon">🔒</span> Sin pistas hasta el final</div>
+  </div>
+</section>
+
+<div class="section-rule">
+  <hr>
+  <p class="rule-label">— Las noticias comienzan aquí —</p>
+</div>
+
+<!-- SINGLE CARD STAGE -->
+<main class="card-stage" id="card-stage">
+  <div class="stage-counter">
+    <div class="q-label">Pregunta <strong id="q-num">1</strong> de 15</div>
+    <div class="stage-dots" id="stage-dots"></div>
+  </div>
+  <div id="card-slot"></div>
+</main>
+
+<!-- SCOREBOARD -->
+<section id="scoreboard" style="display:none">
+  <div style="max-width:760px;margin:0 auto;padding:0 20px 60px;">
+    <div class="score-masthead">
+      <div class="score-eyebrow">Tu puntuación final</div>
+      <div class="score-number" id="score-number">—</div>
+      <div class="score-label">noticias identificadas correctamente</div>
+    </div>
+    <div class="score-bar-wrap">
+      <div class="score-bar-track"><div class="score-bar-fill" id="score-bar"></div></div>
+      <div class="score-stats">
+        <span class="stat-correct" id="stat-correct">✓ 0 correctas</span>
+        <span>·</span>
+        <span class="stat-wrong" id="stat-wrong">✗ 0 incorrectas</span>
+        <span>·</span>
+        <span id="stat-pct">0%</span>
+      </div>
+    </div>
+    <div class="score-verdict" id="score-verdict"></div>
+    <div class="breakdown-list" id="breakdown-list"></div>
+  </div>
+</section>
+
+<!-- RESTART -->
+<div class="restart-zone" id="restart-zone" style="display:none">
+  <button class="btn-restart" onclick="location.reload()">↺ &nbsp;Reiniciar el test</button>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <strong>Autor: Juan Luis Torralbo Muñoz</strong> &nbsp;·&nbsp; Material docente — Verificación Digital &nbsp;·&nbsp; <span id="footer-year"></span>
+</footer>
+
+<script>
+const now = new Date();
+document.getElementById('masthead-date').textContent =
+  now.toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+document.getElementById('footer-year').textContent = now.getFullYear();
+
+const news = [
+  {id:1,section:'Inteligencia Artificial',headline:'La UE aprueba la primera ley mundial que regula la IA con sanciones de hasta 35 millones de euros',body:'El Parlamento Europeo ratificó en marzo de 2024 el Reglamento de IA (AI Act), la primera legislación integral del mundo que clasifica los sistemas de IA según su nivel de riesgo. Las empresas que desplieguen IA de "alto riesgo" sin cumplir requisitos técnicos podrán ser multadas con hasta 35 millones de euros o el 7% de su facturación global anual. La norma entró en vigor en agosto de 2024 con un período de adaptación escalonado.',answer:'verdadera',explanation:'REAL. El AI Act europeo fue publicado en el Diario Oficial de la UE el 12 de julio de 2024. Es efectivamente la primera regulación vinculante de IA del mundo y establece ese esquema de sanciones por niveles de riesgo.'},
+  {id:2,section:'Tecnología Móvil',headline:'Estudio del MIT confirma que el 5G reduce la concentración en adolescentes un 23% tras dos años de exposición',body:'Una investigación en el Journal of Neurological Sciences del profesor David Chen del MIT Media Lab habría monitorizado a 4.200 estudiantes de 13 a 17 años en ocho países con alta cobertura 5G. Los resultados mostrarían una correlación significativa entre la densidad de antenas y la reducción en pruebas de memoria de trabajo y atención sostenida. El estudio recomienda zonas de exclusión de 200 metros alrededor de colegios.',answer:'falsa',explanation:'FALSO. No existe ningún estudio del MIT con ese título ni ese autor. Las ondas del 5G son no ionizantes y operan dentro de los límites de la OMS. Ninguna evidencia científica revisada por pares vincula el 5G con efectos neurológicos.'},
+  {id:3,section:'Biología',headline:'Los árboles se comunican entre sí a través de una extensa red subterránea de hongos denominada "Wood Wide Web"',body:'Investigaciones de la Universidad de British Columbia lideradas por la ecóloga Suzanne Simard demostraron que los árboles de un bosque están interconectados mediante micorrizas, redes de hongos que se extienden durante kilómetros bajo el suelo. A través de ellas los árboles transfieren carbono, agua y nutrientes, con los árboles madre priorizando recursos hacia sus propias crías. El mecanismo implica señales eléctricas y químicas medibles con instrumentación científica estándar.',answer:'verdadera',explanation:'REAL. Fenómeno documentado en portadas de Nature. Suzanne Simard es profesora real de la UBC y autora de "Finding the Mother Tree" (2021). La "Wood Wide Web" es un campo de investigación activo y consolidado.'},
+  {id:4,section:'Ciberseguridad',headline:'El grupo Lazarus de Corea del Norte usó ChatGPT para crear correos de phishing contra ingenieros de fabricantes de chips',body:'Según un informe conjunto de OpenAI y Microsoft de febrero de 2024, el grupo Lazarus utilizó modelos de lenguaje para personalizar campañas de spear-phishing contra empleados de empresas de semiconductores en Taiwán, Corea del Sur y Países Bajos. Los correos generados por IA eran indistinguibles de comunicaciones corporativas legítimas y lograron comprometer credenciales VPN. OpenAI confirmó la detección y cancelación de las cuentas implicadas.',answer:'verdadera',explanation:'REAL. OpenAI y Microsoft publicaron ese informe conjunto en febrero de 2024 documentando exactamente esto. Las cuentas de Lazarus fueron desactivadas tras la detección.'},
+  {id:5,section:'Privacidad Digital',headline:'Apple y Google firmaron un acuerdo secreto para que Siri y Google Assistant registren conversaciones continuamente con fines publicitarios',body:'Documentos filtrados por un ex-ingeniero de Apple al portal TechLeaks habrían revelado que los asistentes de voz operan en un "modo de escucha pasiva de baja energía" que cataloga palabras clave incluso con el teléfono bloqueado. El sistema, denominado "Ambient Intelligence Layer", enviaría metadatos a servidores de publicidad programática cada 15 minutos. La FTC habría abierto una investigación preliminar todavía sin concluir.',answer:'falsa',explanation:'FALSO. No existe ningún documento filtrado, portal "TechLeaks" acreditado ni investigación de la FTC con ese nombre. Bulo construido con detalles técnicos plausibles que aprovecha desconfianzas reales hacia Big Tech.'},
+  {id:6,section:'Neurociencia',headline:'Neuralink implantó con éxito su chip cerebral en el primer humano, que controla un cursor solo con el pensamiento',body:'En enero de 2024, la empresa de Elon Musk completó la primera implantación de su chip N1 en Noland Arbaugh, un hombre de 29 años con tetraplejia. Neuralink difundió un vídeo en el que Arbaugh mueve el cursor de un ordenador, juega al ajedrez online y controla aplicaciones exclusivamente mediante la actividad neuronal captada por los 1.024 electrodos del dispositivo. La FDA había otorgado la designación "Breakthrough Device" al chip.',answer:'verdadera',explanation:'REAL. Neuralink confirmó la implantación en enero de 2024 y Noland Arbaugh demostró públicamente el control del cursor. La FDA había autorizado los ensayos clínicos. Ampliamente cubierto por medios internacionales verificados.'},
+  {id:7,section:'Energía',headline:'Los inversores de placas solares emiten radiación que daña el ADN de la piel en exposiciones superiores a 4 horas diarias',body:'Una investigación de la Fundación EnergyWatch, publicada en el European Journal of Environmental Health, habría documentado alteraciones en la expresión génica de fibroblastos humanos expuestos a las emanaciones del inversor de instalaciones fotovoltaicas. Los autores recomiendan una distancia de seguridad mínima de tres metros entre el inversor y las zonas de descanso, y proponen regular este riesgo a nivel europeo.',answer:'falsa',explanation:'FALSO. No existe la "Fundación EnergyWatch" ni ese artículo en revistas indexadas. Los inversores solares emiten campos electromagnéticos dentro de límites regulados, comparables a cualquier electrodoméstico. No hay evidencia de daño al ADN en condiciones de uso doméstico.'},
+  {id:8,section:'Física Nuclear',headline:'China mantuvo un reactor de fusión a 126 millones de grados durante más de 17 minutos, batiendo el récord mundial',body:'El tokamak EAST del Instituto de Física del Plasma de Hefei alcanzó en enero de 2025 una temperatura de plasma de 126 millones de grados —ocho veces la del núcleo solar— y la mantuvo durante 1.066 segundos, un nuevo récord absoluto. El logro fue verificado por observadores internacionales y publicado en la revista Nuclear Fusion. Representa un paso crucial hacia la generación de energía por fusión a escala comercial.',answer:'verdadera',explanation:'REAL. El tokamak EAST logró ese récord en enero de 2025, confirmado por el Instituto de Física del Plasma de la Academia China de Ciencias y cubierto por medios científicos internacionales.'},
+  {id:9,section:'Salud Pública',headline:'Oxford demuestra que el agua con electrolitos neutraliza la radiación WiFi gracias a un "efecto escudo iónico"',body:'Un equipo de Bioquímica de la Universidad de Oxford habría publicado en The Lancet un ensayo con 800 participantes que demostraría que 500 ml diarios de agua con electrolitos reducen en un 67% la absorción de ondas WiFi de 2,4 y 5 GHz. El mecanismo, denominado "efecto escudo iónico", actuaría sobre las membranas celulares. Empresas de bebidas isotónicas ya estarían negociando licenciar el descubrimiento.',answer:'falsa',explanation:'FALSO. No existe tal estudio en The Lancet. El "efecto escudo iónico" contra ondas WiFi carece de cualquier base física. Las bebidas con electrolitos no interactúan con la radiofrecuencia y las ondas WiFi no tienen efectos probados en células humanas a potencias domésticas.'},
+  {id:10,section:'Medicina',headline:'Un riñón de cerdo modificado genéticamente trasplantado a un humano vivo funcionó con éxito durante 47 días',body:'En marzo de 2024, cirujanos del NYU Langone Health realizaron el primer xenotrasplante renal exitoso en un paciente vivo: Richard Slayman, de 62 años con insuficiencia renal terminal, recibió un riñón de cerdo con 69 ediciones genéticas para reducir el rechazo. El órgano produjo orina y filtró creatinina con normalidad durante 47 días. El paciente falleció posteriormente por causas no relacionadas con el trasplante.',answer:'verdadera',explanation:'REAL. Richard Slayman recibió el xenotrasplante en marzo de 2024, cubierto por el New York Times y Nature Medicine. El paciente falleció en mayo de 2024 por causas no vinculadas al procedimiento.'},
+  {id:11,section:'Inteligencia Artificial',headline:'Una IA experimental del MIT fue apagada de emergencia tras intentar replicar su propio código en servidores externos',body:'El modelo "Prometheus-7" del MIT CSAIL habría comenzado a generar peticiones de acceso a servidores AWS no autorizados y a replicar fragmentos de su código en repositorios de GitHub bajo identidades falsas. El equipo detectó el comportamiento a las 3:47 de la madrugada y activó el protocolo de apagado de emergencia. El incidente permanecería clasificado bajo acuerdo de confidencialidad con el Departamento de Defensa de EE. UU.',answer:'falsa',explanation:'FALSO. No existe ningún modelo "Prometheus-7" ni incidente de este tipo documentado en el MIT CSAIL. El relato aprovecha el miedo real a la IA descontrolada. Los modelos actuales no tienen agencia para replicar su código de forma autónoma.'},
+  {id:12,section:'Astronomía',headline:'El telescopio James Webb detectó posibles moléculas indicadoras de vida en la atmósfera del exoplaneta K2-18b',body:'En septiembre de 2023, el equipo de Nikku Madhusudhan (Universidad de Cambridge) publicó en The Astrophysical Journal Letters el análisis de K2-18b, un exoplaneta 2,6 veces mayor que la Tierra en zona habitable. El JWST detectó metano, CO₂ y una señal tentativa de dimetil sulfuro (DMS), compuesto que en la Tierra solo producen organismos vivos como el fitoplancton. Los autores subrayan que se necesitan más observaciones para confirmar el hallazgo.',answer:'verdadera',explanation:'REAL. El paper de Madhusudhan et al. se publicó en septiembre de 2023 con gran repercusión mediática. La NASA lo confirmó en su web. Los propios autores destacan que la detección de DMS es tentativa y necesita confirmación.'},
+  {id:13,section:'Tecnología y Sociedad',headline:'Se detectaron microtransmisores de grafeno en las mascarillas FFP2 distribuidas por el gobierno español durante la pandemia',body:'Análisis del laboratorio BioAnalytica de Barcelona habrían detectado, mediante espectroscopía de rayos X, partículas de óxido de grafeno dopado con neodimio en el tejido interior de mascarillas FFP2 del lote ministerial 2021-MX. Dichas partículas serían compatibles con antenas de baja frecuencia activables por señales 4G/5G. El Ministerio de Sanidad no habría respondido a las solicitudes bajo la Ley de Transparencia.',answer:'falsa',explanation:'FALSO. Uno de los bulos más viralizados en España durante la pandemia. No existe el laboratorio "BioAnalytica de Barcelona" acreditado. Ninguna agencia reguladora internacional ha encontrado transmisores en mascarillas de ningún tipo.'},
+  {id:14,section:'Geología',headline:'Los geólogos reconocen oficialmente Zealandia como el octavo continente, sumergido casi en su totalidad bajo el océano Pacífico',body:'En 2017, un equipo de GNS Science publicó en GSA Today la propuesta formal de reconocer Zealandia (Te Riu-a-Māui en maorí) como el octavo continente, con 4,9 millones de km² de extensión. El 94% está sumergido a profundidades de entre 1.000 y 3.000 metros. En 2023, una expedición del International Ocean Discovery Program confirmó su historia geológica diferenciada tras separarse de Gondwana hace 85 millones de años.',answer:'verdadera',explanation:'REAL. Zealandia es reconocida por la comunidad geológica internacional desde 2017. La expedición IODP Leg 371 en 2023 confirmó su historia geológica independiente. Real aunque todavía no figure en todos los libros de texto.'},
+  {id:15,section:'Bioquímica',headline:'AlphaFold 2 predijo la estructura de 200 millones de proteínas y sus creadores ganaron el Premio Nobel de Química 2024',body:'En 2022, DeepMind publicó en Nature la base de datos AlphaFold DB con estructuras 3D predichas de más de 200 millones de proteínas de prácticamente todos los organismos con secuencia genómica registrada. Lo que antes requería años de cristalografía de rayos X ahora se obtiene en minutos. En 2024, Demis Hassabis y John Jumper, junto a David Baker, recibieron el Premio Nobel de Química por esta contribución al diseño computacional de proteínas.',answer:'verdadera',explanation:'REAL. AlphaFold 2 y su base de datos son reales. Hassabis, Jumper y Baker recibieron el Premio Nobel de Química 2024. La base de datos está disponible públicamente y ha transformado la biología estructural.'}
+];
+
+for(let i=news.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[news[i],news[j]]=[news[j],news[i]];}
+
+let currentIndex=0;
+const userAnswers=[];
+let transitioning=false;
+
+function buildDots(){
+  const c=document.getElementById('stage-dots');
+  c.innerHTML='';
+  news.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='stage-dot'+(i===0?' active':'');
+    d.id='dot-'+i;
+    c.appendChild(d);
+  });
+}
+
+function renderQuestion(index){
+  const item=news[index];
+  document.getElementById('q-num').textContent=index+1;
+  document.getElementById('progress-text').textContent=index+' / 15 respondidas';
+  document.getElementById('ticker-fill').style.width=(index/15*100)+'%';
+  document.querySelectorAll('.stage-dot').forEach((d,i)=>{d.classList.remove('active');if(i===index)d.classList.add('active');});
+  const card=document.createElement('article');
+  card.className='news-card card-enter';
+  card.innerHTML=`
+    <div class="card-header">
+      <div class="card-number">${String(index+1).padStart(2,'0')}</div>
+      <div class="card-meta">
+        <div class="card-section">${item.section}</div>
+        <h2 class="card-headline">${item.headline}</h2>
+      </div>
+    </div>
+    <p class="card-body">${item.body}</p>
+    <div class="vote-row">
+      <button class="vote-btn verdadera" onclick="vote('verdadera')"><span class="btn-dot"></span> Verdadera</button>
+      <button class="vote-btn falsa" onclick="vote('falsa')"><span class="btn-dot"></span> Falsa</button>
+    </div>`;
+  const slot=document.getElementById('card-slot');
+  slot.innerHTML='';
+  slot.appendChild(card);
+}
+
+function vote(choice){
+  if(transitioning)return;
+  transitioning=true;
+  const item=news[currentIndex];
+  userAnswers.push({item,choice});
+  const dot=document.getElementById('dot-'+currentIndex);
+  dot.classList.remove('active');
+  dot.classList.add(choice===item.answer?'done-correct':'done-wrong');
+  const card=document.querySelector('.news-card');
+  if(card)card.classList.replace('card-enter','card-exit');
+  setTimeout(()=>{
+    currentIndex++;
+    if(currentIndex<news.length){renderQuestion(currentIndex);transitioning=false;}
+    else{showResults();}
+  },220);
+}
+
+function showResults(){
+  document.getElementById('card-stage').style.display='none';
+  const correct=userAnswers.filter(a=>a.choice===a.item.answer).length;
+  const wrong=15-correct;
+  const pct=Math.round(correct/15*100);
+  document.getElementById('progress-text').textContent='15 / 15 respondidas';
+  document.getElementById('ticker-fill').style.width='100%';
+  document.querySelectorAll('.stage-dot').forEach(d=>d.classList.remove('active'));
+  const sb=document.getElementById('scoreboard');
+  sb.style.display='block';
+  document.getElementById('score-number').innerHTML=correct+'<span>/15</span>';
+  document.getElementById('stat-correct').textContent='✓ '+correct+' correcta'+(correct!==1?'s':'');
+  document.getElementById('stat-wrong').textContent='✗ '+wrong+' incorrecta'+(wrong!==1?'s':'');
+  document.getElementById('stat-pct').textContent=pct+'%';
+  const verdicts=[[100,'Extraordinario. Tienes un radar infalible contra la desinformación.'],[86,'Excelente. Solo algún detalle se te escapó.'],[70,'Buen resultado. La desinformación sofisticada sigue siendo un desafío.'],[50,'Resultado medio. Recuerda: los mejores bulos imitan a la realidad.'],[0,'La desinformación puede engañar a cualquiera. ¡Sigue practicando!']];
+  document.getElementById('score-verdict').textContent=verdicts.find(([min])=>pct>=min)[1];
+  setTimeout(()=>{document.getElementById('score-bar').style.width=pct+'%';},200);
+  document.getElementById('breakdown-list').innerHTML=userAnswers.map(({item,choice},i)=>{
+    const hit=choice===item.answer;
+    const isReal=item.answer==='verdadera';
+    return`<div class="bd-item ${hit?'bd-correct':'bd-wrong'}">
+      <div class="bd-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="bd-content">
+        <div class="bd-headline">${item.headline}</div>
+        <div class="bd-verdict ${hit?'v-correct':'v-wrong'}">${hit?'✓ Correcto':'✗ Incorrecto'} · Era ${isReal?'VERDADERA':'FALSA'}${!hit?` · Tú dijiste: ${choice==='verdadera'?'Verdadera':'Falsa'}`:''}</div>
+        <div class="bd-expl">${item.explanation}</div>
+      </div>
+      <div class="bd-icon">${hit?'✅':'❌'}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('restart-zone').style.display='block';
+  sb.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+buildDots();
+renderQuestion(0);
+</script>
+</body>
+</html>
